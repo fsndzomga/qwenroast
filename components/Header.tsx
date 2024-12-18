@@ -7,7 +7,7 @@ export default function Header() {
       <div className="container mx-auto px-4 flex items-center justify-between">
         <div className="flex items-center">
           <Flame className="w-8 h-8 mr-2" />
-          <span className="text-2xl font-bold">QwenRoast</span>
+          <span className="text-2xl font-bold hidden md:block">QwenRoast</span>
         </div>
         <a
           className="flex items-center gap-2 hover:underline hover:underline-offset-4 text-sm"
