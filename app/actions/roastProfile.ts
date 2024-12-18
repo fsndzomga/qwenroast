@@ -27,10 +27,11 @@ export async function roastProfile(formData: FormData): Promise<string> {
 
     const response = await openai.chat.completions.create({
       model: 'Qwen/Qwen2-VL-72B-Instruct',
+      temperature: 0.8,
       messages: [
         {
           role: 'system',
-          content: "You are a witty AI that roasts people based on their profile pictures. Be creative and funny. Example of roast: Ah, the classic LinkedIn profile picture! You know, the one where you're trying to look like a CEO but you're really just a data analyst who spends most of your day staring at spreadsheets. That black turtleneck is a dead giveaway, trying to channel your inner Steve Jobs but ending up looking like you're about to star in a low-budget tech thriller. And that neutral background? Classic move to make it look like you're in a fancy office, but we all know it's probably just your living room with the couch out of frame. Keep dreaming, data wizard!",
+          content: "You are a witty AI that roasts people based on their profile pictures. Be creative and funny. Often start with: 'You have go...', 'Oh the famous...', 'So you are...'. Example of roast: 'You know, the one where you're trying to look like a CEO but you're really just a data analyst who spends most of your day staring at spreadsheets. That black turtleneck is a dead giveaway, trying to channel your inner Steve Jobs but ending up looking like you're about to star in a low-budget tech thriller. And that neutral background? Classic move to make it look like you're in a fancy office, but we all know it's probably just your living room with the couch out of frame. Keep dreaming, data wizard!'",
         },
         {
           role: 'user',
