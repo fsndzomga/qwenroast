@@ -7,48 +7,65 @@ const openai = new OpenAI({
   apiKey: process.env.NEBIUS_API_KEY,
 })
 
-
 export async function roastProfile(formData: FormData): Promise<string> {
   try {
-    const image = formData.get('image') as File
-    const jobTitle = formData.get('jobTitle') as string
+    const image = formData.get('image') as File;
+    const jobTitle = formData.get('jobTitle') as string;
 
     if (!image) {
-      throw new Error('No image provided')
+      throw new Error('No image provided');
     }
 
     if (!jobTitle) {
-      throw new Error('No job title provided')
+      throw new Error('No job title provided');
     }
 
-    const bytes = await image.arrayBuffer()
-    const buffer = Buffer.from(bytes)
-    const base64Image = buffer.toString('base64')
+    const bytes = await image.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+    const base64Image = buffer.toString('base64');
 
-    const response = await openai.chat.completions.create({
+    // Stage 1: Use Qwen model to check if image is a profile picture
+    const descriptionResponse = await openai.chat.completions.create({
       model: 'Qwen/Qwen2-VL-72B-Instruct',
       temperature: 0.8,
       messages: [
         {
           role: 'system',
-          content: "You are a witty AI that roasts people based on their profile pictures. Be creative and funny. Often start with: 'You have go...', 'Oh the famous...', 'So you are...'. Example of roast: 'You know, the one where you're trying to look like a CEO but you're really just a data analyst who spends most of your day staring at spreadsheets. That black turtleneck is a dead giveaway, trying to channel your inner Steve Jobs but ending up looking like you're about to star in a low-budget tech thriller. And that neutral background? Classic move to make it look like you're in a fancy office, but we all know it's probably just your living room with the couch out of frame. Keep dreaming, data wizard!'",
+          content: 'You are an image analysis AI. Describe the image provided to determine if it is a human profile picture.'
         },
         {
           role: 'user',
           content: [
-            {
-              type: 'text',
-              text: `I am a ${jobTitle}. Based on my profile picture, roast me, particularly by mocking the way people like to present themselves on LinkedIn in a grandiose manner to feed their egos.`
-            },
-            { type: 'image_url', image_url: { url: `data:image/png;base64,${base64Image}` } },
-          ],
-        },
-      ],
-    })
+            { type: 'image_url', image_url: { url: `data:image/png;base64,${base64Image}` } }
+          ]
+        }
+      ]
+    });
 
-    return response.choices[0].message.content || 'Failed to generate roast.'
+    const description = descriptionResponse.choices[0].message.content;
+
+    // Stage 2: Use Meta-Llama model to roast the profile picture if it is human
+    const roastResponse = await openai.chat.completions.create({
+      model: 'meta-llama/Meta-Llama-3.1-405B-Instruct',
+      temperature: 0.8,
+      messages: [
+        {
+          role: 'system',
+          content: 'You are a witty AI that roasts people based on their profile pictures. Be creative and funny. Often start with: "You have go...", "Oh the famous...", "So you are...". Example of roast: "You know, the one where you\'re trying to look like a CEO but you\'re really just a data analyst who spends most of your day staring at spreadsheets..."'
+        },
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: `I am a ${jobTitle}. Based on description of my profile picture, roast me, particularly by mocking the way people like to present themselves on LinkedIn in a grandiose manner to feed their egos. description: ${description}. If the image is not a classic profile picture with human face, say you cannot roast.` },
+
+          ]
+        }
+      ]
+    });
+
+    return roastResponse.choices[0].message.content || 'Failed to generate roast.';
   } catch (error) {
-    console.error('Error generating roast:', error)
-    throw new Error('Failed to generate roast')
+    console.error('Error generating roast:', error);
+    throw new Error('Failed to generate roast');
   }
 }
